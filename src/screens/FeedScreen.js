@@ -16,10 +16,9 @@ import { fetchFeed } from '../service/feedService';
 import Stories from '../components/Stories';
 import Hashtags from '../components/Hashtags';
 
-
 export default function FeedScreen() {
   const [feed, setFeed] = useState([]);
-  const [page, setPage] = useState(1);
+  const [lastId, setLastId] = useState('');   // for pagination
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -28,20 +27,20 @@ export default function FeedScreen() {
 
   const ITEMS_PER_PAGE = 4;
 
-  // Core loader: fetches a page of items
-  const loadPage = useCallback(
-    async (pageToLoad, replace = false) => {
+  const loadFeed = useCallback(
+    async (useLastId = '', replace = false) => {
       try {
-        const items = await fetchFeed(pageToLoad, ITEMS_PER_PAGE);
-        if (replace) {
-          setFeed(items);
-        } else {
-          setFeed(prev => [...prev, ...items]);
+        const { feeds, more } = await fetchFeed(useLastId, ITEMS_PER_PAGE);
+
+        setFeed(prev =>
+          replace ? feeds : [...prev, ...feeds]
+        );
+        setHasMore(more);
+
+        // update lastId for next page
+        if (feeds.length > 0) {
+          setLastId(feeds[feeds.length - 1]._id);
         }
-        if (items.length < ITEMS_PER_PAGE) {
-          setHasMore(false);
-        }
-        setPage(pageToLoad);
         setError(null);
       } catch (err) {
         setError(err.message || 'Error fetching feed');
@@ -54,23 +53,24 @@ export default function FeedScreen() {
     []
   );
 
-  // Initial load
+  // initial load
   useEffect(() => {
-    loadPage(1, true);
-  }, [loadPage]);
+    loadFeed('', true);
+  }, [loadFeed]);
 
-  // Pull-to-refresh handler
+  // pull-to-refresh
   const onRefresh = () => {
     setRefreshing(true);
     setHasMore(true);
-    loadPage(1, true);
+    setLastId('');
+    loadFeed('', true);
   };
 
-  // Infinite-scroll handler
+  // infinite scroll
   const onEndReached = () => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
-    loadPage(page + 1);
+    loadFeed(lastId, false);
   };
 
   if (loading) {
@@ -80,7 +80,6 @@ export default function FeedScreen() {
       </View>
     );
   }
-
   if (error) {
     return (
       <View style={styles.center}>
@@ -97,7 +96,7 @@ export default function FeedScreen() {
 
       <FlatList
         data={feed}
-        keyExtractor={item => item.id.toString()}
+        keyExtractor={item => item._id}
         renderItem={({ item }) => <FeedItem post={item} />}
         contentContainerStyle={styles.list}
         refreshControl={
@@ -118,23 +117,9 @@ export default function FeedScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 16,
-  },
-  list: {
-    padding: 16,
-  },
-  footer: {
-    paddingVertical: 12,
-  },
+  container: { flex: 1, backgroundColor: '#fff' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  errorText: { color: 'red', fontSize: 16 },
+  list: { padding: 16 },
+  footer: { paddingVertical: 12 },
 });

@@ -1,10 +1,12 @@
 // src/screens/StoryScreen.js
+
 import React, { useState } from 'react';
 import {
   View,
   Dimensions,
   StyleSheet,
   TouchableOpacity,
+  SafeAreaView,
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -12,7 +14,6 @@ import Icon from 'react-native-vector-icons/Ionicons';
 const { width, height } = Dimensions.get('window');
 
 export default function StoryScreen({ route, navigation }) {
-  // Array of image URLs passed in params
   const { stories } = route.params;
   const [index, setIndex] = useState(0);
 
@@ -31,8 +32,8 @@ export default function StoryScreen({ route, navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Full-screen image */}
+    <SafeAreaView style={styles.container}>
+      {/* Full‐screen image */}
       <FastImage
         source={{ uri: stories[index] }}
         style={styles.image}
@@ -47,17 +48,11 @@ export default function StoryScreen({ route, navigation }) {
         <Icon name="close" size={28} color="#fff" />
       </TouchableOpacity>
 
-      {/* Tap areas */}
-      <TouchableOpacity
-        style={styles.leftArea}
-        onPress={goPrev}
-      />
-      <TouchableOpacity
-        style={styles.rightArea}
-        onPress={goNext}
-      />
+      {/* Tap‐areas for back/forward */}
+      <TouchableOpacity style={styles.leftArea} onPress={goPrev} />
+      <TouchableOpacity style={styles.rightArea} onPress={goNext} />
 
-      {/* Progress indicators */}
+      {/* Progress bars */}
       <View style={styles.progressBarContainer}>
         {stories.map((_, i) => (
           <View
@@ -69,7 +64,7 @@ export default function StoryScreen({ route, navigation }) {
           />
         ))}
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -84,8 +79,10 @@ const styles = StyleSheet.create({
   },
   closeBtn: {
     position: 'absolute',
-    top: 40,
+    top: 16,
     right: 16,
+    zIndex: 10,           // bring to front
+    padding: 8,           // enlarge touch area
   },
   leftArea: {
     position: 'absolute',
@@ -93,6 +90,7 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: width * 0.3,
+    zIndex: 1,
   },
   rightArea: {
     position: 'absolute',
@@ -100,10 +98,11 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: width * 0.3,
+    zIndex: 1,
   },
   progressBarContainer: {
     position: 'absolute',
-    top: 20,
+    top: 16,
     left: 16,
     right: 16,
     flexDirection: 'row',

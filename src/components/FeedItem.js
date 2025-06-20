@@ -1,57 +1,60 @@
 // src/components/FeedItem.js
 
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { View, Text, StyleSheet } from 'react-native';
 import FastImage from 'react-native-fast-image';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 export default function FeedItem({ post }) {
-  // Format ISO timestamp to “Weekday, Month Day”
-  const formattedDate = new Date(post.timestamp).toLocaleDateString('en-US', {
+  const formattedDate = new Date(post.createdAt).toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
   });
 
+  const likeCount = Array.isArray(post.reactions.length)
+    ? post.reactions.reduce((sum, r) => sum + (r.count || 0), 0)
+    : 0;
+  const shareCount = post.share ?? 0;
+  const file = post.files && post.files.length ? post.files[0] : null;
+
   return (
     <View style={styles.card}>
-      {/* Top row: avatar + name on left; stats on right */}
+      {/* ... same UI you already have ... */}
       <View style={styles.topRow}>
         <View style={styles.userRow}>
-          <Image source={{ uri: post.user.avatar }} style={styles.avatar} />
+          <FastImage
+            source={{ uri: post.user.avatar }}
+            style={styles.avatar}
+            resizeMode={FastImage.resizeMode.cover}
+          />
           <Text style={styles.username}>{post.user.name}</Text>
         </View>
         <View style={styles.statsRow}>
-          <View style={styles.statItem}>
-            <Icon name="heart" size={18} color="#e91e63" />
-            <Text style={styles.statText}>{post.likes}</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Icon name="share-social" size={18} color="#666" />
-            <Text style={styles.statText}>{post.comments} Shares</Text>
-          </View>
+          <Icon name="heart" size={18} color="#e91e63" />
+          <Text style={styles.statText}>{likeCount}</Text>
+          <Icon
+            name="share-social"
+            size={18}
+            color="#666"
+            style={styles.statIconSpacing}
+          />
+          <Text style={styles.statText}>{shareCount} Shares</Text>
         </View>
       </View>
 
-      {/* Second row: date + globe icon */}
       <View style={styles.subRow}>
         <Text style={styles.timestamp}>{formattedDate}</Text>
-        <Icon
-          name="globe-outline"
-          size={14}
-          color="#666"
-          style={styles.globe}
-        />
+        <Icon name="globe-outline" size={14} color="#666" style={styles.globe} />
       </View>
 
-      {/* Post image */}
-      {post.image && (
-       <FastImage
-          source={{ uri: post.image }}
+      {file && (
+        <FastImage
+          source={{ uri: file.url }}
           style={styles.postImage}
           resizeMode={FastImage.resizeMode.cover}
         />
-     )}
+      )}
     </View>
   );
 }
@@ -87,21 +90,19 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontSize: 16,
     fontWeight: 'bold',
-    color:'black'
+    color: 'black',
   },
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 16,
-  },
   statText: {
     marginLeft: 6,
     fontSize: 14,
     color: '#333',
+  },
+  statIconSpacing: {
+    marginLeft: 16,
   },
   subRow: {
     flexDirection: 'row',
@@ -120,6 +121,5 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 200,
     borderRadius: 8,
-    resizeMode: 'cover',
   },
 });

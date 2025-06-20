@@ -1,21 +1,36 @@
-// src/services/feedService.js
-
-// Import the local JSON
-import feedData from '../../mock/feedData.json';
+// src/service/feedService.js
 
 /**
- * Simulates fetching a “page” of feed items.
- * @param {number} page 1-indexed page number
- * @param {number} limit items per page
- * @returns Promise<array>
+ * Fetches a “page” of feed items from staging API.
+ * @param {string} lastId  the _id of the last item from the previous page
+ * @param {number} limit   max items per page
+ * @returns Promise<{ feeds: array, more: boolean }>
  */
-export async function fetchFeed(page = 1, limit = 4) {
-  // simulate network latency
-  await new Promise(res => setTimeout(res, 500));
+export async function fetchFeed(lastId = '', limit = 4) {
+  const base = 'https://staging.thunderscript.com/api/feed';
+  const params = new URLSearchParams({
+    profile: '673f0d13aa1afbc03f4686f6',
+    limit: String(limit),
+  });
+  if (lastId) params.append('lastId', lastId);
 
-  const allItems = feedData.feed;
-  const start = (page - 1) * limit;
-  const end = page * limit;
-  // slice out the requested page
-  return allItems.slice(start, end);
+  const response = await fetch(`${base}?${params.toString()}`, {
+    method: 'GET',
+    headers: {
+      'client-id': '66ea7609c990886923861202',
+      'client-secret': '653f1e94-fa6d-4d10-932e-e1030c5dcb1c',
+      // no Cookie required here if session not needed
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  const json = await response.json();
+  // API returns { feeds: [...], more: boolean }
+  return {
+    feeds: json.feeds,
+    more: json.more,
+  };
 }
